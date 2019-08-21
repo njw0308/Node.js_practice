@@ -25,7 +25,7 @@ function getUser() { // 로딩 시 사용자 가져오는 함수
                 console.error(xhr.responseText);
               }
             };
-            xhr.open('PUT', '/users/' + key);z
+            xhr.open('PUT', '/users/' + key); // 수정.
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.send(JSON.stringify({ name: name }));
           });
@@ -73,8 +73,8 @@ document.getElementById('form').addEventListener('submit', function (e) {
         console.error(xhr.responseText);
       }
     };
-    xhr.open('POST', '/users');
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({ name: name }));
+    xhr.open('POST', '/users'); //ajax를 통해 post 요청.
+    xhr.setRequestHeader('Content-Type', 'application/json'); // 요청의 헤더
+    xhr.send(JSON.stringify({ name: name })); // 요청의 본문, Json 문자열로 name 을 보내줌.
     e.target.username.value = '';
   });
