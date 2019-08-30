@@ -1,0 +1,16 @@
+doctype html
+html
+    head
+        //변수 선언 가능
+        -const variable = true
+        -const title = '익스프레스'
+        -const title2 = '안녕'
+        title=title + ' ' + title2
+        link(rel='stylesheet', href='/stylesheets/style.css')
+    body
+        // 중복되는 부분은 include 나 layout 으로 해결
+        include header
+        block content
+        include footer
+        block script
+            

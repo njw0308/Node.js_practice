@@ -1,0 +1,19 @@
+//layout 으로 만든 부분, 즉 전체의 구조를 상속받는 느낌
+extends layoutPractice.pug
+
+block content 
+        #junwoo(width=500) 메롱
+        // <div id='junwoo' width="500">메롱</div>
+        span.express.nodejs
+        //<span class="express nodejs">
+        button(type='submit') 전송
+        if variable
+            div 참입니다
+        else
+            div 거짓입니다
+        for i in fruits
+            div= i
+block script
+        script.
+            var message='Pug';
+            alert(message)
