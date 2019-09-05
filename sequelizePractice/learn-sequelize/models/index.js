@@ -40,6 +40,6 @@ db.Comment = require('./comment')(sequelize, Sequelize);
 
 // one to many 관계.
 db.User.hasMany(db.Comment, {foreignKey: 'commenter', sourceKey: 'id'})
-db.Comment.belongsTo(db.User, {foreignKey: 'commenter', targetKey: 'id'})
+db.Comment.belongsTo(db.User, {foreignKey: 'commenter', targetKey: })
 
 module.exports = db;

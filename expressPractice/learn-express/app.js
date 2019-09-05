@@ -41,6 +41,11 @@ app.use((req,res, next) => {
 
 app.use(logger('dev')); // 요청에 대한 정보를 console 창에 기록해줌
 app.use(express.json()); //요청의 본문을 해석해주는 미들웨어. 원래는 body-parser 라는 미들웨어인데 일부 기능이 express에 내장되어 있음.
+// 아래와 같이 바꿔서 표현할 수도 있음.
+// --> 다른 기능들을 추가할 수 있음. password를 바꿔준다는 등. 다른 기능을 확장할 때 쓰는 패턴!!
+// app.use((req, res, next) => {
+//   express.json()(req,res,next);
+// })
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser()); // 요청에 보내진 쿠키를 해석 해줌. 
 app.use(express.static(path.join(__dirname, 'public'))); // 정적인 파일들을 제공해줌.
@@ -97,8 +102,12 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  // res.locals 가 있는 이유는 다른 미들웨어 안에서도 선언이 가능하기 때문에
+  // --> 지금 이 상황에서는 상관 없지만 나중에 다른 미들웨어 안에서 선언하고자 할 때 써먹을 수 있는 방법
+  res.locals.message = err.message; 
+  res.locals.error = req.app.get('env') === 'development' ? err : {}; 
+  // req.app 을 통해서 app 객체에 접근하는 것. 'env'는 'key' 
+  // 개발 환경인 경우에는 에러메세지를 표현해주고, 배포 환경인 경우에는 에러메세지를 표현해주지 않음.
 
   // render the error page
   res.status(err.status || 500);
