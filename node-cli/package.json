@@ -5,10 +5,15 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
-      },
+    },
     "author": "MATDOL",
     "license": "ISC",
     "bin": {
-        "cli2": "./template.js"
+        "cli2": "./command.js"
+    },
+    "dependencies": {
+        "chalk": "^2.4.2",
+        "commander": "^3.0.1",
+        "inquirer": "^7.0.0"
     }
 }
