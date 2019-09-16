@@ -83,6 +83,37 @@ const makeTemplate = (type, name, directory) => {
     }
 };
 
+const copyFile = (name, directory) => {
+    if(exist(name)) {
+        fs.copyFileSync(name, path.join(directory, name))
+        console.log('파일 복사가 완료되었습니다.');
+    } else {
+        console.error('파일이 존재하지 않습니다.');
+    }
+};
+
+//https://stackoverflow.com/questions/18052762/remove-directory-which-is-not-empty
+const deleteFolderRecursive = function(name) {
+    if (fs.existsSync(name)) {
+      try {
+        fs.readdirSync(name).forEach(function(file, index){
+            var curPath = path.join(name, file)
+            if (fs.lstatSync(curPath).isDirectory()) { // 디렉토리라면 한 번 더 들어가보기. recurse
+              deleteFolderRecursive(curPath);
+            } else { // delete file
+              fs.unlinkSync(curPath);
+            }
+          });
+          fs.rmdirSync(name);
+      } catch {
+          // delete file.
+          fs.unlinkSync(name);
+      }
+    } else {
+        console.error("폴더가 존재하지 않습니다.")
+    }
+  };
+
 let triggered = false;
 program
 .version('0.0.1', '-v, --version')
@@ -101,12 +132,31 @@ program
 });
 
 program
+.command('copy <name> <directory>')
+.usage('<name> <directory>')
+.description('파일을 복사합니다.')
+.action((name, directory) => {
+    copyFile(name, directory)
+    triggered = true;
+})
+
+program
+.command('deleteFolder <folderName>')
+.usage('<folderName>')
+.description('폴더를 지웁니다.')
+.action((name) => {
+    deleteFolderRecursive(name)
+    triggered = true;
+})
+
+program
 .command('*', {noHelp: true})
 .action(() => {
     console.log('해당 명령어를 찾을 수 없습니다.');
     program.help();
     triggered = true;
 });
+
 
 program.parse(process.argv);
 
