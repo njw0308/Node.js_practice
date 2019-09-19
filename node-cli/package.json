@@ -9,11 +9,14 @@
     "author": "MATDOL",
     "license": "ISC",
     "bin": {
-        "cli2": "./command.js"
+        "cli2": "./command.js",
+        "wallet": "./wallet.js"
     },
     "dependencies": {
         "chalk": "^2.4.2",
         "commander": "^3.0.1",
-        "inquirer": "^7.0.0"
+        "inquirer": "^7.0.0",
+        "mysql2": "^1.7.0",
+        "sequelize": "^5.18.4"
     }
 }

@@ -70,7 +70,7 @@ const makeTemplate = (type, name, directory) => {
         }
     // express-router 파일을 만들고 싶어.
     } else if ( type === 'express-router') {
-        const pathToFile = path.join(directory, `${name}.html`);
+        const pathToFile = path.join(directory, `${name}.js`);
         if( exist(pathToFile)) {
             console.error(chalk.bold.red("이미 해당 파일이 존재합니다."));
         } else {
