@@ -1,0 +1,30 @@
+1. 시작은 폴더를 만드는 것으로.
+2. 만든 폴더로 이동 후, npm init --> package.json 만드는. packageManager/npmBegin.js 파일 참조.
+3. npm i -g sequelize-cli
+4. npm i sequelize mysql2
+5. sequelize init
+(config file 수정 후)
+6. sequelize db:create
+7. npm i -D nodemon --> 서버 코드가 변경될 때 알아서 재시작을 해줌. nodemon <파일명> --> 개발할 때만 필요함. devDependencis에 위치.
+( 배포 때는 pm2? 나 forever 와 같은 다른 패키지를 쓴댜!)
+8. npm i -g nodemon --> 명령프롬프트에서도 쓰기 때문에 전역설치.
+9. generator 를 쓰지 않고 폴더의 구조를 짜보자! 
+
+10. npm i dotenv  --> .env 라는 파일을 만들 수 있음.
+  --> require('dotenv').config()  
+  --> process.env 에 기록이 됨.
+  --> 보안에 효과적!
+
+(( sequelize 를 통해 테이블 만들어준 후, index 에서 관계 설정해주고, app.js 에 sequelize 등록!
+    sequelize.sync()
+))
+
+11. npm i passport passport-local passport-kakao bcrypt --> 로그인을 위한 패키지. 실제 구현을 하기보다 모듈들을 끌어와서 쓰자. 
+  --> 원리를 알아야 응용이 가능!! 
+
+((
+로그인 전략을 구현한 후,  app.js 에 등록.
+   passportConfig(passport)
+   app.use(passport.initialize())
+   app.use(passport.session())
+   ))

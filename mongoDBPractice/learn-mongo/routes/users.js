@@ -22,11 +22,11 @@ router.post('/', function(req, res, next) {
     married: req.body.married,
   });
   user.save()
-  .then((result) => {
+    .then((result) => {
     console.log(result);
     res.status(201).json(result);
   })
-  .catch((err) => {
+    .catch((err) => {
     console.error(err);
     next(err);
   });
