@@ -72,4 +72,16 @@ router.get('/logout', isLoggedIn, (req, res, next) => {
     res.redirect('/');
 })
 
+// GET auth/kakao - 카카오 로그인. --> kakao strategy 를 실행.
+// --> kakao 서버가 우리 대신에 로그인 인증을 대신해줌!
+// --> authenticate 에 콜백 함수가 없음, local 과 비교했을 때.
+router.get('/kakao', passport.authenticate('kakao'));
+
+// 결과를 받을 라우터.
+router.get('/kakao/callback', passport.authenticate('kakao', {
+    failureRedirect: '/', // 실패하는 경우 메인페이지로.
+}), (req, res) => {
+    res.redirect('/');
+});
+
 module.exports = router;

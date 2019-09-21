@@ -30,8 +30,9 @@ module.exports = (passport) => {
        
     });
 
+    // 전략을 등록하는 것. authenticate('local') authenticate('kakao') 같은
     local(passport);
-    //kakao(passport);
+    kakao(passport);
 }
 
 // strategy --> 누구를 로그인 시킬 것인가 
