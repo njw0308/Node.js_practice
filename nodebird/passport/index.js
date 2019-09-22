@@ -23,7 +23,20 @@ module.exports = (passport) => {
         if ( obj[id]) {
             done(null, obj[id]);
         } else {
-            User.findOne({where: { id }})
+            User.findOne({
+                where: { id },
+                include: [{
+                    // 현재 User 와 Follower 인 얘들
+                    model: User,
+                    attributes: ['id', 'nick'],
+                    as: 'Followers',
+                }, {
+                    // 현재 User 와 Following 인 얘들.
+                    model: User,
+                    attributes: ['id', 'nick'],
+                    as: 'Followings',
+                }],
+            })
             .then(user => { obj[id] = user; return done(null, user)}) //3. 조회된 사용자 정보를 req.user에 저장.  --> 4. 라우터에서 req.user 객체 사용 가능.
             .catch(err => done(err));
         }

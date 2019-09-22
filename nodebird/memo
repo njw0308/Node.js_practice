@@ -28,3 +28,14 @@
    app.use(passport.initialize())
    app.use(passport.session())
    ))
+
+12. npm i multer --> 사진 업로드를 위한 패키지.
+--> 이미지를 업로드하려면 input[type=file] 태그와 form tag 의 enctype 을 multipart/form-data(인코딩 타입). 로 함.
+--> 이것을 해석(디코딩?)하려면 multer 가 필요하다.
+
+------------------------------------------
+복습:
+app.use 를 사용하므로 라우터도 역시 미들웨어.
+express.ROUTER() 로 router 객체를 만듬. --> 이 router 객체가 또 여러 개의 미들웨어를 장착할 수 있음.
+moudle.exports = router --> 나중에 재사용을 할 수도 있으니까. 
+매 요청시 마다 app.js 가 작동하고 그 중간에 있는 미들웨어들이 작동하게 됨.

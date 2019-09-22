@@ -9,7 +9,8 @@ const passport = require('passport');
 require('dotenv').config() 
 
 const indexRouter = require('./routes/page');
-//const userRouter = require('./routes/user');
+const userRouter = require('./routes/user');
+const postRouter = require('./routes/post');
 const authRouter = require('./routes/auth');
 const { sequelize } = require('./models');
 const passportConfig = require('./passport');
@@ -24,6 +25,7 @@ app.set('port', process.env.PORT || 5129);
 
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/img', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -47,7 +49,8 @@ app.use(passport.session()); // 사용자 정보를 세션에다 저장. req.ses
 // 라우터 미들웨어 연결.
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
-
+app.use('/post', postRouter);
+app.use('/user', userRouter);
 // 에러처리.
 app.use((req, res, next) => {
     const err = new Error("Not Found");
