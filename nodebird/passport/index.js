@@ -20,27 +20,22 @@ module.exports = (passport) => {
     // 1. passport.session() 미들웨어가 이 메서드를 호출.
     // 2. serializerUser(위 메서드)에서 세션에 저장했던 아이디를 받아 DB에서 사용자 정보 조회.
     passport.deserializeUser((id, done) => {
-        if ( obj[id]) {
-            done(null, obj[id]);
-        } else {
-            User.findOne({
-                where: { id },
-                include: [{
-                    // 현재 User 와 Follower 인 얘들
-                    model: User,
-                    attributes: ['id', 'nick'],
-                    as: 'Followers',
-                }, {
-                    // 현재 User 와 Following 인 얘들.
-                    model: User,
-                    attributes: ['id', 'nick'],
-                    as: 'Followings',
-                }],
-            })
-            .then(user => { obj[id] = user; return done(null, user)}) //3. 조회된 사용자 정보를 req.user에 저장.  --> 4. 라우터에서 req.user 객체 사용 가능.
-            .catch(err => done(err));
-        }
-       
+        User.findOne({
+            where: { id },
+            include: [{
+                // 현재 User 와 Follower 인 얘들
+                model: User,
+                attributes: ['id', 'nick'],
+                as: 'Followers',
+             }, {
+                // 현재 User 와 Following 인 얘들.
+                model: User,
+                attributes: ['id', 'nick'],
+                as: 'Followings',
+            }],
+        })
+        .then(user => { obj[id] = user; return done(null, user)}) //3. 조회된 사용자 정보를 req.user에 저장.  --> 4. 라우터에서 req.user 객체 사용 가능.
+        .catch(err => done(err));    
     });
 
     // 전략을 등록하는 것. authenticate('local') authenticate('kakao') 같은

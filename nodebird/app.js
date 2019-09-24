@@ -25,7 +25,7 @@ app.set('port', process.env.PORT || 5129);
 
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/img', express.static(path.join(__dirname, 'uploads')));
+app.use('/img', express.static(path.join(__dirname, 'uploads'))); // 실제 주소 (/uploads) 와 접근 주소(/img)를 다르게 만들 수 있음.
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser(process.env.COOKIE_SECRET));
