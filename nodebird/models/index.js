@@ -24,8 +24,8 @@ db.Hashtag.belongsToMany(db.Post, { through : 'PostHashtag'});
 db.User.belongsToMany(db.User, {through: 'Follow', as: 'Followers', foreignKey: 'followingId'});
 db.User.belongsToMany(db.User, {through: 'Follow', as: 'Followings', foreignKey: 'followerId'});
 
-// 좋아요 기능.
-db.User.belongsToMany(db.Post, { through : 'Like'});
-db.Post.belongsToMany(db.User, { through : 'Like'});
+// 좋아요 기능.  + as는 별칭 느낌?? 이 명칭으로 sequelize 에서 데이터를 넣고 빼는 작업을 쉽게 할 수 있다.
+db.User.belongsToMany(db.Post, { through : 'Like', as: 'Likes'});
+db.Post.belongsToMany(db.User, { through : 'Like',  as: 'Liker'});
 
 module.exports = db;
