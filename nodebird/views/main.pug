@@ -28,7 +28,7 @@ block content
             button.twit-follow 팔로우하기
           else if user && user.id !== twit.user.id && follow
             button.twit-unfollow 팔로우끊기
-          -const like = user && twit.Liker.map(el => el.id).includes(user.id)
+          -const like = user && twit.Liker && twit.Liker.map(el => el.id).includes(user.id)
           if user && !like
             button.twit-like 좋아요
           else if user && like 

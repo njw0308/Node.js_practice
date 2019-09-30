@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 
 const { verifyToken } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');

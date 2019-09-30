@@ -20,6 +20,7 @@ router.get('/join', isNotLoggedIn, (req, res) => {
 
 // 메인 페이지.
 router.get('/', (req, res, next) => {
+
     Post.findAll({
         include: [{
             model: User, // 게시글 작성자 모델이랑 연결.
