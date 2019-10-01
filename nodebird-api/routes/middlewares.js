@@ -2,6 +2,7 @@
 // --> 로그인한 사람만 할 수 있는 것과, 로그인하지 않은 사람만 할 수 있는 것을 구분.
 // ex) 로그아웃 / 로그인(로그인 한 사람이 또 로그인 할 순 없으니까.)
 const jwt = require('jsonwebtoken');
+const RateLimit = require('express-rate-limit');
 
 exports.isLoggedIn = (req, res, next) => {
     
@@ -42,3 +43,23 @@ exports.verifyToken = (req, res, next) => {
         });
     }
 }
+
+exports.apiLimiter = new RateLimit({
+    windowMS: 60 * 1000, // 기준 시간
+    max: 5, // 허용 횟수
+    delayMs: 0, // 호출 간격
+    handler(req, res) { // 제한 초과시 콜백 함수
+        res.status(this.statusCode).json({
+            code: this.statusCode,
+            message: '1분에 한 번만 요청할 수 있습니다.',
+        });
+    },
+});
+
+// 버전 관리를 위한 미들웨어.
+exports.deprecated = (req, res) => {
+    res.status(410).json({
+        code: 410,
+        message: '새로운 버전이 나왔습니다. 새로운 버전을 사용하세요.',
+    });
+};
