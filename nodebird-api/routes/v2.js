@@ -1,9 +1,46 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
+const url = require('url');
 
 const { verifyToken, apiLimiter } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');
+
+// cors 미들웨어가 응답헤더에 Access-Control-Allow-Origin 을 넣어줌으로써 해결해줌. 
+// router.use(cors()); 
+
+// 다르게 표현. --> 커스터마이징!
+// router.use( async (req, res, next) => {
+//     cors()(req,res,next); --> 미들웨어 내의 미들웨어 쓰는 방법.
+// });
+
+// 특정 도메인만 허용하기.
+// router.use(cors({ origin : 'http://localhost:8003'}));
+// router.use(cors({origin : (origin, callback) => {
+//     if (['http://localhost:8001', 'http://localhost:8003'].indexOf(origin) !== -1) {
+//         callback(null, true)
+//     } else {
+//         callback(new Error('Not allowed by CORS'))
+//     }
+// }}));
+
+//Network 탭에서 , Access-Control-Allow-Origin: http://localhost:8003 로 바뀐다!
+router.use(async (req, res, next) => {
+    // req.get('origin') --> http://localhost:8003 --> request 를 날린 주소.
+    try {
+        // 에러가 발생하기 때문에 try - catch
+        const domain = await Domain.findOne({
+            where : {host : req.get('origin')},
+        });
+        if (domain) {
+            cors({ origin: req.get('origin') })(req, res, next);
+        }
+    } catch(err) {
+        next()
+    }
+
+});
 
 // 토큰을 발급하는 라우터
 router.post('/token', apiLimiter, async (req, res) => {
