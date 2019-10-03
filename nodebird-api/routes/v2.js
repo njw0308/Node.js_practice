@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const url = require('url');
 
-const { verifyToken, apiLimiter } = require('./middlewares');
+const { verifyToken, apiLimiter, apiLimiterPremium } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');
 
 // cors 미들웨어가 응답헤더에 Access-Control-Allow-Origin 을 넣어줌으로써 해결해줌. 
@@ -34,16 +34,54 @@ router.use(async (req, res, next) => {
             where : {host : req.get('origin')},
         });
         if (domain) {
-            cors({ origin: req.get('origin') })(req, res, next);
+            cors({ origin: req.get('origin') })(req, res, next); // --> 미들웨어 커스터마이징
         }
     } catch(err) {
         next()
     }
-
 });
 
+// MARK: API 사용량 분할하기 solution1.
+router.use(async (req, res, next) => {
+    console.log(res)
+    try {
+        const domain = await Domain.findOne({
+            where: {host : req.get('origin')},
+        });
+        console.log(domain.dataValues)
+        if (domain.dataValues.type === "free") {
+            apiLimiter(req, res, next);
+        } else if (domain.dataValues.type === "premium") {
+            apiLimiterPremium(req, res, next);
+        }
+    } catch(err) {
+        next();
+    }
+})
+
+// MARK: API 사용량 분할하기 solution2.
+// const apiConfirm = () => {
+//     return async (req, res, next) => {
+//         try {
+//             const domain = await Domain.findOne({
+//                 where: {host : req.get('origin')},
+//             });
+//             console.log(domain.dataValues);
+//             if (domain.dataValues.type === "free") {
+//                apiLimiter(req, res, next);
+//             } else if (domain.dataValues.type === "premium") {
+//                apiLimiterPremium(req, res, next);
+//             }
+//         } catch(err) {
+//             next();
+//         }
+//     }
+// }
+
+// router.use(apiConfirm());
+
 // 토큰을 발급하는 라우터
-router.post('/token', apiLimiter, async (req, res) => {
+router.post('/token', async (req, res) => {
     const { clientSecret } = req.body;
     try {
         const domain = await Domain.findOne({
@@ -84,11 +122,11 @@ router.post('/token', apiLimiter, async (req, res) => {
 })
 
 // 토큰 테스트
-router.get('/test', apiLimiter, verifyToken, (req, res) => {
+router.get('/test', verifyToken, (req, res) => {
     res.json(req.decoded);
 });
 
-router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
+router.get('/posts/my', verifyToken, (req, res) => {
     Post.findAll({where : {userId: req.decoded.id }})
     .then( (posts) => {
         console.log(posts);
@@ -105,7 +143,7 @@ router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
     });
 });
 
-router.get('/posts/hashtag/:title', apiLimiter, verifyToken, async (req, res) => {
+router.get('/posts/hashtag/:title', verifyToken, async (req, res) => {
     try {
         const hashtag = await Hashtag.findOne({where : {title: req.params.title}});
         if( !hashtag) {
@@ -127,5 +165,54 @@ router.get('/posts/hashtag/:title', apiLimiter, verifyToken, async (req, res) =>
         });
     }
 });
+
+router.get('/follower', verifyToken, async ( req, res) => {
+    try {
+        const followers = await User.findAll({
+            where : { id : req.decoded.id },
+            attributes: ['id', 'nick'],
+            include : [{
+                model : User,
+                attributes: ['id', 'nick'],
+                as : 'Followers'
+            }]
+        })
+        res.json({
+            code : 200,
+            payload: followers,
+        })
+    } catch(err) {
+        console.error(err);
+        return res.status(404).json({
+            code: 404,
+            message: '검색 결과가 없습니다.',
+        })
+    }
+});
+
+router.get('/following', verifyToken, async (req, res) => {
+    try {
+        const followings = await User.findAll({
+            where : { id : req.decoded.id },
+            attributes: ['id', 'nick'],
+            include : [{
+                model : User,
+                attributes: ['id', 'nick'],
+                as : 'Followings'
+            }]
+        })
+        res.json({
+            code : 200,
+            payload: followings,
+        })    
+    } catch(err) {
+        console.error(err);
+        return res.status(404).json({
+            code: 404,
+            message: '검색 결과가 없습니다.'
+        })
+    }
+})
+
 
 module.exports = router;

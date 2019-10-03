@@ -51,8 +51,31 @@ router.get('/search/:hashtag', async (req, res, next) => {
   }
 });
 
+router.get('/myfollower', async (req, res, next) => {
+  try {
+    const result = await request(req, '/follower');
+    res.json(result.data);
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.get('/myfollowing', async (req, res, next) => {
+  try {
+    const result = await request(req, '/following');
+    res.json(result.data);
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+})
+
+// cors 문제 practice 를 위한 라우터. 
 router.get('/', (req, res) => {
   res.render('main', {key: process.env.CLIENT_SECRET});
 });
+
+
 
 module.exports = router

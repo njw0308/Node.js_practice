@@ -51,10 +51,22 @@ exports.apiLimiter = new RateLimit({
     handler(req, res) { // 제한 초과시 콜백 함수
         res.status(this.statusCode).json({
             code: this.statusCode,
-            message: '1분에 한 번만 요청할 수 있습니다.',
+            message: '1분에 5번 요청할 수 있습니다.',
         });
     },
 });
+
+exports.apiLimiterPremium = new RateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    delayMs: 0,
+    handler(req, res) {
+        res.status(this.statusCode).json({
+            code: this.statusCode,
+            message: '1분에 10번 요청할 수 있습니다.',
+        })
+    }
+})
 
 // 버전 관리를 위한 미들웨어.
 exports.deprecated = (req, res) => {
