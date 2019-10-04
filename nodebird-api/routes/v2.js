@@ -43,7 +43,6 @@ router.use(async (req, res, next) => {
 
 // MARK: API 사용량 분할하기 solution1.
 router.use(async (req, res, next) => {
-    console.log(res)
     try {
         const domain = await Domain.findOne({
             where: {host : req.get('origin')},
@@ -82,16 +81,29 @@ router.use(async (req, res, next) => {
 
 // 토큰을 발급하는 라우터
 router.post('/token', async (req, res) => {
-    const { clientSecret } = req.body;
+    const { frontSecret, clientSecret } = req.body;
     try {
-        const domain = await Domain.findOne({
-            where: { clientSecret },
-            include :{
-                model : User,
-                attribute: ['nick', 'id'],
-            },
-        });
+        console.log('working')
+        if (frontSecret) {
+            var domain = await Domain.findOne({
+                where: { frontSecret },
+                include :{
+                    model : User,
+                    attribute: ['nick', 'id'],
+                },
+            });    
+        }
 
+        if (clientSecret) {
+            var domain = await Domain.findOne({
+                where: { clientSecret },
+                include :{
+                    model : User,
+                    attribute: ['nick', 'id'],
+                },
+            });  
+        }
+        
         if (!domain) {
             return res.status(401).json({
                 code : 401,

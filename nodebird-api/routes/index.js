@@ -28,12 +28,12 @@ router.get('/', (req, res, next) => {
 })
 
 router.post('/domain', (req, res, next) => {
-    console.log(req.body);
     Domain.create({
         userId: req.user.id,
         host: req.body.host,
         type: req.body.type,
         clientSecret: uuidv4(),
+        frontSecret: uuidv4(),
     })
     .then( () => {
         res.redirect('/');

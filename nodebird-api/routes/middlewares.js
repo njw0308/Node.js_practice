@@ -64,9 +64,9 @@ exports.apiLimiterPremium = new RateLimit({
         res.status(this.statusCode).json({
             code: this.statusCode,
             message: '1분에 10번 요청할 수 있습니다.',
-        })
-    }
-})
+        });
+    },
+});
 
 // 버전 관리를 위한 미들웨어.
 exports.deprecated = (req, res) => {

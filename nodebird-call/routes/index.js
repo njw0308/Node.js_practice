@@ -10,6 +10,7 @@ const request =  async (req, api) => {
       const tokenResult = await axios.post(`${URL}/token`, {
         clientSecret: process.env.CLIENT_SECRET,
       });
+      console.log(tokenResult)
       if (tokenResult.data && tokenResult.data.code === 200) { // 토큰 발급 성공
         req.session.jwt = tokenResult.data.token; // 세션에 토큰 저장
       } 
@@ -20,6 +21,8 @@ const request =  async (req, api) => {
     });
   } catch (error) {
     if (error.response.status === 419) { // 토큰 만료 시
+      delete req.session.jwt; // 세션 만료시 세션에 저장된 jwt 삭제.
+      request(req, api) // 다시 요청. 
       return error.response;
     }
     throw error
@@ -73,7 +76,7 @@ router.get('/myfollowing', async (req, res, next) => {
 
 // cors 문제 practice 를 위한 라우터. 
 router.get('/', (req, res) => {
-  res.render('main', {key: process.env.CLIENT_SECRET});
+  res.render('main', {key: process.env.FRONT_SECRET});
 });
 
 
