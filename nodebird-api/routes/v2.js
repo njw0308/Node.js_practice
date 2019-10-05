@@ -81,7 +81,7 @@ router.use(async (req, res, next) => {
 
 // 토큰을 발급하는 라우터
 router.post('/token', async (req, res) => {
-    const { frontSecret, clientSecret } = req.body;
+    const { frontSecret, clientSecret } = req.body; //프론트로 오는 것과 서버단에서 오는 요청을 구분하자!
     try {
         console.log('working')
         if (frontSecret) {
