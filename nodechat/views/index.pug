@@ -5,13 +5,15 @@ html
         title GIF 채팅방
     body
         div F12를 눌러 console 탭과 network 탭을 확인하세요
+        //- "Socket.IO"에서 클라이언트로 제공하는 스크립트. 
+        script(src='/socket.io/socket.io.js') 
         script.
             // 웹소켓 스크립트 부분
-            var webSocket = new WebSocket('ws://localhost:5129');
-            webSocket.onopen = function() {
-                console.log('서버와 웹 소켓 연결 성공');
-            };
-            webSocket.onmessage = function (event) {
-                console.log(event.data);
-                webSocket.send('클라이언트에서 서버로 답장을 보냅니다.');   
-            }
+            var socket = io.connect('http://localhost:5129', {
+                path: '/socket.io', // path 부분이 서버의 path 옵션과 일치해야 함.
+                transports: ['websocket'] // 처음부터 웹 소켓만 사용하고 싶을 때.
+            });
+            socket.on('news', function(data) {
+                console.log(data);
+                socket.emit('reply', 'Hello Node.js'); // 메세지 이벤트. 키 - 값의 쌍.
+            })

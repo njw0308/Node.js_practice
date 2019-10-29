@@ -1,36 +1,58 @@
-const SocketIO = require('socket.io'); 
-module.exports = (server) => {
-    const wss = new WebSocket.Server({ server }); // websocket 서버.
+const SocketIO = require('socket.io');
+const axios = require('axios');
 
-    // event 기반. 클러이언트 -> ws 요청 -> 서버  --> 이 때 터지는 event 가 connection(연결 중)
-    wss.on('connection', (ws, req) => {
+module.exports = (server, app, sessionMiddleware) => {
+    const io = SocketIO(server, {path: '/socket.io'});
+    app.set('io', io); // 라우터에서 io 객체를 쓸 수 있게 저장. req.app.get('io') 로 접근
+    const room = io.of('/room') // namespace 만들기. 같은 네임스페이스끼리 데이터 전달.
+    const chat = io.of('/chat');
 
-        // req.headers['x-forwarded-for'] --> 프록시 거치기 전의 아이피.
-        // req.connection.remoteAddress  --> 최종 아이피
-        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('클라이언트 접속', ip);
+    // io.use 메서드로 미들웨어를 장착할 수 있음. 
+    // 익스프레스 미들웨어를 SOCKET.IO 에서 사용하는 방법.
+    io.use((socket, next) => { 
+        sessionMiddleware(socket.request, socket.request.res, next); // 세션미들웨어 커스터마이징
+    });
 
-        //클라이언트가 서버에게 메세지를 보냈을 때 발생하는 이벤트.
-        ws.on('message', (message) => {
-            console.log(message);
+    room.on('connection', (socekt) => {
+        console.log('room 네임스페이스에 접속');
+        socekt.on('disconnect', () => {
+            console.log('room 네임스페이스 접속 해제');
+        });
+    });
+
+    chat.on('connection', (socekt) => {
+        console.log('chat 네임스페이스에 접속');
+        const req = socket.request // 요청 객체에 접근. 
+        const { headers: { referer } } = req;
+        // req.headers.referer 에 웹 주소가 들어있음. 거기서 방 아이디를 가져올 것.
+        const roomId = referer.split('/')[referer.split('/').length -1 ].replace(/\?.+/, '');
+        socket.join(roomId); // 방에 들어옴.
+
+        socket.to(roomId).emit('join', {
+            user: 'system',
+            chat: `${req.session.color}님이 입장하셨습니다..`,
         });
 
-        //서버에서 클라이언트로 메세지를 보냄.
-        const interval = setInterval( () => {
-            if (ws.readyState === ws.OPEN) { // ws.CONNECTING , ws.CLOSING, ws.CLOSED 
-                ws.send('서버에서 클라이언트로 메세지를 보냅니다.');    
+        socekt.on('disconnect', () => {
+            console.log('chat 네임스페이스 접속 해제');
+            socekt.leave(roomId); //방에서 나감.
+            // 방에 인원이 하나도 없는 경우.
+            const currentRoom = socekt.adapter.rooms[roomId]; // 방에 대한 정보. namespace 로 지정한 그 방이 아닌. join 으로 들어오는 고유명사로써 방.
+            const userCount = currentRoom? currentRoom.length : 0;
+            if (userCount === 0) {
+                axios.delete(`http://localhost:8005/room/${roomId}`)
+                .then(() => {
+                    console.log('방 제거 요청 성공');
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
+            } else {
+                socket.to(roomId).emit('exit', {
+                    user: 'system',
+                    chat: `${req.session.color}님이 퇴장하셨습니다.`,
+                });
             }
-        }, 3000)
-        
-        ws.interval = interval;
-
-        ws.on('error', (error) => {
-            console.log(error);
-        });
-        
-        ws.on('close', () => {
-            console.log('클라이언트 접속 해제', ip);
-            clearInterval(ws.interval); // 서버가 쓸데 없는 일을 하지 않도록! "메모리 누수 방지"
         });
     });
 };
