@@ -20,7 +20,7 @@ module.exports = (server, app, sessionMiddleware) => {
         });
     });
 
-    chat.on('connection', (socekt) => {
+    chat.on('connection', (socket) => {
         console.log('chat 네임스페이스에 접속');
         const req = socket.request // 요청 객체에 접근. 
         const { headers: { referer } } = req;
@@ -28,16 +28,18 @@ module.exports = (server, app, sessionMiddleware) => {
         const roomId = referer.split('/')[referer.split('/').length -1 ].replace(/\?.+/, '');
         socket.join(roomId); // 방에 들어옴.
 
+        // socket.to 메서드로 특정 방에 데이터를 보낼 수 있음.
         socket.to(roomId).emit('join', {
             user: 'system',
             chat: `${req.session.color}님이 입장하셨습니다..`,
         });
 
-        socekt.on('disconnect', () => {
+        socket.on('disconnect', () => {
             console.log('chat 네임스페이스 접속 해제');
-            socekt.leave(roomId); //방에서 나감.
+            socket.leave(roomId); //방에서 나감.
             // 방에 인원이 하나도 없는 경우.
-            const currentRoom = socekt.adapter.rooms[roomId]; // 방에 대한 정보. namespace 로 지정한 그 방이 아닌. join 으로 들어오는 고유명사로써 방.
+            const currentRoom = socket.adapter.rooms[roomId]; // 방에 대한 정보. namespace 로 지정한 그 방이 아닌. join 으로 들어오는 고유명사로써 방.
+            console.log("currentRoom", '-', currentRoom);
             const userCount = currentRoom? currentRoom.length : 0;
             if (userCount === 0) {
                 axios.delete(`http://localhost:8005/room/${roomId}`)
