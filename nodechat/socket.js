@@ -27,11 +27,12 @@ module.exports = (server, app, sessionMiddleware) => {
         // req.headers.referer 에 웹 주소가 들어있음. 거기서 방 아이디를 가져올 것.
         const roomId = referer.split('/')[referer.split('/').length -1 ].replace(/\?.+/, '');
         socket.join(roomId); // 방에 들어옴.
-
+        const userCount = socket.adapter.rooms[roomId].length
         // socket.to 메서드로 특정 방에 데이터를 보낼 수 있음.
         socket.to(roomId).emit('join', {
             user: 'system',
-            chat: `${req.session.color}님이 입장하셨습니다..`,
+            chat: `${req.session.color}님이 입장하셨습니다. 현재 방 인원은 ${userCount}명 입니다.`,
+            number: userCount,
         });
 
         socket.on('disconnect', () => {
@@ -41,6 +42,8 @@ module.exports = (server, app, sessionMiddleware) => {
             const currentRoom = socket.adapter.rooms[roomId]; // 방에 대한 정보. namespace 로 지정한 그 방이 아닌. join 으로 들어오는 고유명사로써 방.
             console.log("currentRoom", '-', currentRoom);
             const userCount = currentRoom? currentRoom.length : 0;
+
+            // 여기서 db에 대한 값을 곧장 지워도 되지만, 라우터를 통해 디비에 있는 값을 처리하는 것이 좋음.
             if (userCount === 0) {
                 axios.delete(`http://localhost:8005/room/${roomId}`)
                 .then(() => {
@@ -52,7 +55,8 @@ module.exports = (server, app, sessionMiddleware) => {
             } else {
                 socket.to(roomId).emit('exit', {
                     user: 'system',
-                    chat: `${req.session.color}님이 퇴장하셨습니다.`,
+                    chat: `${req.session.color}님이 퇴장하셨습니다. 남은 인원은 ${userCount}명 입니다.`,
+                    number: userCount,
                 });
             }
         });

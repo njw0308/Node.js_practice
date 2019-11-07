@@ -31,6 +31,7 @@ app.set('port', process.env.PORT || 8005);
 
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/gif', express.static(path.join(__dirname, 'uploads'))); // /gif 로 req가 들어올 때, uploads 폴더에서 파일을 꺼내줄 것임.
 app.use(express.json()); 
 app.use(express.urlencoded({extended:false}));
 app.use(cookieParser(process.env.COOKIE_SECRET));
