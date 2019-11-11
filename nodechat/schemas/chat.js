@@ -12,6 +12,10 @@ const chatSchema = new Schema({
         type: String,
         required: true,
     },
+    system: {
+        type: Boolean,
+        default: false,
+    },
     chat: String,
     gif: String,
     createdAt: {

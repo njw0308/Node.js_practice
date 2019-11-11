@@ -27,7 +27,23 @@ module.exports = (server, app, sessionMiddleware) => {
         // req.headers.referer 에 웹 주소가 들어있음. 거기서 방 아이디를 가져올 것.
         const roomId = referer.split('/')[referer.split('/').length -1 ].replace(/\?.+/, '');
         socket.join(roomId); // 방에 들어옴.
-        const userCount = socket.adapter.rooms[roomId].length
+        const userCount = socket.adapter.rooms[roomId].length;
+        
+        // 시스템 메세지 저장 LOGIC
+        const userId = req.session.color;
+        if (userId) {
+            const newUserId = userId.slice(1, userId.length -1 )
+            urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/in` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
+            axios.post(urlString)
+            .then(() => {
+                console.log("system 메시지 전송 성공");
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+        };
+        
+
         // socket.to 메서드로 특정 방에 데이터를 보낼 수 있음.
         socket.to(roomId).emit('join', {
             user: 'system',
@@ -43,6 +59,20 @@ module.exports = (server, app, sessionMiddleware) => {
             console.log("currentRoom", '-', currentRoom);
             const userCount = currentRoom? currentRoom.length : 0;
 
+            // 시스템 메세지 저장 LOGIC
+            const userId = req.session.color;
+            if (userId) {
+                const newUserId = userId.slice(1, userId.length -1 )
+                urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/out` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
+                axios.post(urlString)
+                .then(() => {
+                    console.log("system 메시지 전송 성공");
+                })
+                .catch((err) => {
+                    console.error(err);
+                })
+            };
+        
             // 여기서 db에 대한 값을 곧장 지워도 되지만, 라우터를 통해 디비에 있는 값을 처리하는 것이 좋음.
             if (userCount === 0) {
                 axios.delete(`http://localhost:8005/room/${roomId}`)

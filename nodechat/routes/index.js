@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 
 const Room = require('../schemas/room');
 const Chat = require('../schemas/chat');
@@ -34,7 +35,9 @@ router.post('/room', async (req, res, next) => {
         const newRoom = await room.save();
         const io = req.app.get('io'); // router 에서 웹 소켓에 접근할 수 있게끔.
         io.of('/room').emit('newRoom', newRoom);
-        res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
+
+        res.redirect(`/room/${newRoom._id}?password=${req.body.password}`)
+
     } catch(err) {
         console.error(err);
         next(err);
@@ -61,7 +64,7 @@ router.get('/room/:id', async (req, res, next) => {
         }
         // 결과값 : 인원수 : undefined  --> 방을 만들면 자동으로 참여하는데 그 때 자기 자신을 인식하지 못하는거 같음.
         console.log(`인원수 : ${rooms[req.params.id]}`)
-        const chats = await Chat.find({ room : room._id}).sort('createdAt');
+        const chats = await Chat.find({ room : room._id, system : false}).sort('createdAt'); // system이 남긴 메세지는 안 찾아도 되니까.
         return res.render('chat', {
             room,
             title: room.title,
@@ -72,6 +75,34 @@ router.get('/room/:id', async (req, res, next) => {
     } catch(err) {
         console.error(err);
         return next(err);
+    }
+});
+
+// 시스템 메세지 저장.
+router.post('/room/system/:id/:userId/:type', async (req, res, next) => {
+    try {
+        if (req.params.type === 'in') {
+            const chat = new Chat( {
+                room: req.params.id,
+                user: req.params.userId,
+                system: true,
+                chat: `${req.params.id} 방에 ${req.params.userId} 님이 입장하셨습니다.`
+            });
+            await chat.save()
+        } else if (req.params.type === 'out') {
+            const chat = new Chat( {
+                room: req.params.id,
+                user: req.params.userId,
+                system: true,
+                chat: `${req.params.id} 방에 ${req.params.userId} 님이 퇴장하셨습니다.`
+            });
+            await chat.save()
+        }
+        
+        res.send('ok');
+    } catch (err) {
+        console.error(err);
+        next(err);
     }
 });
 
