@@ -1,0 +1,22 @@
+
+
+---------------------복습
+1. 로그인 요청
+2. passport.authenticate 메서드 호출
+3. 로그인 전략 
+4. 로그인 성공 시 req.login 호출 (
+    "Passport exposes a login() function on req (also aliased as logIn()) that can be used to establish a login session."
+    http://www.passportjs.org/docs/login/
+)
+5. req.login 메서드가 passport.serializerUser 호출
+6. req.session에 사용자 아이디 저장 
+7. 로그인 완료 
+
+로그인 이후 ...
+1. 모든 요청에 passport.session() 미들웨어가 passport.desrializerUser 메서드 호출.
+2. req.session 에 저장된 아이디로 데이터베이스에서 사용자 조회
+3. 조회된 사용자 정보를 req.user 에 저장. (
+    "When subsequent requests are received, this ID is used to find the user, which will be restored to req.user."
+    http://www.passportjs.org/docs/downloads/html/
+)
+4. 라우텅서 req.user 객체 사용 가능.
