@@ -1,5 +1,7 @@
 const SocketIO = require('socket.io');
 const axios = require('axios');
+const cookie = require('cookie-signature');
+const cookieParser = require('cookie-parser');
 
 module.exports = (server, app, sessionMiddleware) => {
     const io = SocketIO(server, {path: '/socket.io'});
@@ -9,6 +11,9 @@ module.exports = (server, app, sessionMiddleware) => {
 
     // io.use 메서드로 미들웨어를 장착할 수 있음. 
     // 익스프레스 미들웨어를 SOCKET.IO 에서 사용하는 방법.
+    io.use((socket, next) => { 
+        cookieParser(process.env.COOKIE_SECRET)(socket.request, socket.request.res, next) 
+    });
     io.use((socket, next) => { 
         sessionMiddleware(socket.request, socket.request.res, next); // 세션미들웨어 커스터마이징
     });
@@ -30,26 +35,36 @@ module.exports = (server, app, sessionMiddleware) => {
         const userCount = socket.adapter.rooms[roomId].length;
         
         // 시스템 메세지 저장 LOGIC
-        const userId = req.session.color;
-        if (userId) {
-            const newUserId = userId.slice(1, userId.length -1 )
-            urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/in` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
-            axios.post(urlString)
-            .then(() => {
-                console.log("system 메시지 전송 성공");
-            })
-            .catch((err) => {
-                console.error(err);
-            })
-        };
+        // const userId = req.session.color;
+        // if (userId) {
+        //     const newUserId = userId.slice(1, userId.length -1 )
+        //     urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/in` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
+        //     axios.post(urlString)
+        //     .then(() => {
+        //         console.log("system 메시지 전송 성공");
+        //     })
+        //     .catch((err) => {
+        //         console.error(err);
+        //     })
+        // };
         
 
         // socket.to 메서드로 특정 방에 데이터를 보낼 수 있음.
-        socket.to(roomId).emit('join', {
-            user: 'system',
-            chat: `${req.session.color}님이 입장하셨습니다. 현재 방 인원은 ${userCount}명 입니다.`,
-            number: userCount,
-        });
+        // socket.to(roomId).emit('join', {
+        //     user: 'system',
+        //     chat: `${req.session.color}님이 입장하셨습니다. 현재 방 인원은 ${userCount}명 입니다.`,
+        //     number: userCount,
+        // });
+
+        console.log("최초 connection 때의 header : ",  JSON.stringify(req.headers));
+        console.log("req.signedCookies['connect.sid'] : ", req.signedCookies['connect.sid']);
+        console.log("cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET) : ", cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET));
+        axios.post(`http://localhost:8005/room/${roomId}/sys`, {
+            type: 'join'}, {
+                headers: {
+                    Cookie: `connect.sid=${'s%3A' + cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET)}`
+                },
+            });
 
         socket.on('disconnect', () => {
             console.log('chat 네임스페이스 접속 해제');
@@ -60,18 +75,18 @@ module.exports = (server, app, sessionMiddleware) => {
             const userCount = currentRoom? currentRoom.length : 0;
 
             // 시스템 메세지 저장 LOGIC
-            const userId = req.session.color;
-            if (userId) {
-                const newUserId = userId.slice(1, userId.length -1 )
-                urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/out` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
-                axios.post(urlString)
-                .then(() => {
-                    console.log("system 메시지 전송 성공");
-                })
-                .catch((err) => {
-                    console.error(err);
-                })
-            };
+            // const userId = req.session.color;
+            // if (userId) {
+            //     const newUserId = userId.slice(1, userId.length -1 )
+            //     urlString = `http://localhost:8005/room/system/${roomId}/${newUserId}/out` // url 해쉬 기능 때문에, 지금 userId 로는 어쩔 수 없이 임시로 a 붙임.
+            //     axios.post(urlString)
+            //     .then(() => {
+            //         console.log("system 메시지 전송 성공");
+            //     })
+            //     .catch((err) => {
+            //         console.error(err);
+            //     })
+            // };
         
             // 여기서 db에 대한 값을 곧장 지워도 되지만, 라우터를 통해 디비에 있는 값을 처리하는 것이 좋음.
             if (userCount === 0) {
@@ -83,11 +98,17 @@ module.exports = (server, app, sessionMiddleware) => {
                     console.error(err);
                 });
             } else {
-                socket.to(roomId).emit('exit', {
-                    user: 'system',
-                    chat: `${req.session.color}님이 퇴장하셨습니다. 남은 인원은 ${userCount}명 입니다.`,
-                    number: userCount,
-                });
+                // socket.to(roomId).emit('exit', {
+                //     user: 'system',
+                //     chat: `${req.session.color}님이 퇴장하셨습니다. 남은 인원은 ${userCount}명 입니다.`,
+                //     number: userCount,
+                // });
+                axios.post(`http://localhost:8005/room/${roomId}/sys`, {
+                type: 'exit'}, {
+                headers: { // 같은 사람이 보냈다는 것을 알려주기 위해, header 에 내 cookie를 심어 보냄.
+                    Cookie: `connect.sid=${'s%3A' + cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET)}` 
+                }
+            });
             }
         });
     });
