@@ -128,12 +128,20 @@ router.post('/room/:id/chat', async (req, res, next) => {
         });
         await chat.save();
         // 클라이언트에게 chat 이벤트를 발생시킴.
-        req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat); // of( 'namepspace' ).to ( 'room' )
+        // req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat); // of( 'namepspace' ).to ( 'room' )
+        req.app.get('io').of('/chat').to(req.params.id).emit('chat', {
+            socket: req.body.sid, // 프론트에서 넘어온 sid 
+            room: req.params.id,
+            user: req.session.color,
+            chat: req.body.chat
+        });
+        res.send('ok');
     } catch(err) {
         console.error(err);
         next(err);
     }
-})
+});
+
 
 fs.readdir('uploads', (error) => {
     if (error) {
@@ -163,8 +171,12 @@ router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
             gif: req.file.filename,
         });
         await chat.save()
-        print("here")
-        req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+        req.app.get('io').of('/chat').to(req.params.id).emit('chat', {
+            socket: req.body.sid, // 프론트에서 넘어온 sid 
+            room: req.params.id,
+            user: req.session.color,
+            chat: req.body.chat
+        });
         res.send('ok');
     } catch(err) {
         console.error(err);
@@ -173,7 +185,6 @@ router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
 })
 
 router.post('/room/:id/sys', async (req, res, next) => {
-    console.log("axios로 /room/:id/sys 요청할 때 헤더 : ", JSON.stringify(req.headers));
     try {
         const chat = req.body.type === 'join' ? `${req.session.color}님이 입장하셨습니다.` : `${req.session.color} 님이 퇴장하셨습니다.`;
 
@@ -193,6 +204,23 @@ router.post('/room/:id/sys', async (req, res, next) => {
         console.error(err);
         next(err);
     }
-})
+});
+
+router.post('/room/:id/hiddenchat', async (req, res, next) => {
+    try {
+        const chat = new Chat({
+            room: req.params.id,
+            user: req.session.color,
+            chat: "귓속말" + req.body.chat,
+        });
+        await chat.save();
+        // 클라이언트에게 chat 이벤트를 발생시킴.
+        req.app.get('io').of('/chat').to(req.body.otherId).emit('chat', chat); // of( 'namepspace' ).to ( 'room' )
+        res.send('ok');
+    } catch(err) {
+        console.error(err);
+        next(err);
+    }
+});
 
 module.exports = router

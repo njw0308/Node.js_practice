@@ -25,10 +25,15 @@ block content
               img(src='/gif/' + chat.gif)
             else
               div= chat.chat
-  form#chat-form(action='/chat' method='post' enctype='multipart/form-data')
+  form#chat-form( enctype='multipart/form-data')
     label(for='gif') GIF 올리기
     input#gif(type='file' name='gif' accept='image/gif')
     input#chat(name='chat')
+    button(type='submit') 전송
+  form#hidden-chat-form(action='/chat', method='post')
+    label(for='otherId') 상대아이디
+    input#otherId(name='otherId')
+    input#hiddenChat(name='hiddenChat')
     button(type='submit') 전송
   script(src='/socket.io/socket.io.js')
   script.
@@ -67,6 +72,15 @@ block content
       }
       var name = document.createElement('div');
       name.textContent = data.user;
+      name.className= 'chat-user';
+      if (data.user !== "#{user}"){
+        var dm = document.createElement('button');
+        dm.textContent = "귓속말";
+        dm.className = 'dm';
+        dm.dataset.socket = data.socket;  // 서버에서 넘어옴.
+        dm.addEventListener('click', sendDM);
+        name.appendChild(dm);
+      }
       div.appendChild(name);
       if (data.chat) {
         var chat = document.createElement('div');
@@ -93,7 +107,7 @@ block content
         };
         xhr.open('POST', '/room/#{room._id}/chat');
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify({ chat: this.chat.value }));
+        xhr.send(JSON.stringify({ chat: this.chat.value, sid: socket.id })); // 채팅 보낼 때 나의 id 도 같이 보내기.
         document.getElementById('chat').value=''; // clear input field after submitting.
       }
     });
@@ -111,4 +125,33 @@ block content
       };
       xhr.open('POST', '/room/#{room._id}/gif');
       xhr.send(formData);
+    });
+    var sendDM = function (e) {
+      var id = e.target.dataset.socket;
+      var prompt = window.prompt("귓속말을 입력하세요");
+      socket.emit('dm', {target: id, msg: prompt, from: "#{user}"}) // 여기서 바로 socket.emit을 하기보다 라우터를 타서 라우터에서 socket.emit 하는게 나아보임.
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('.dm'), function (e) {
+      e.addEventListener('click', sendDM);
+    });
+    socket.on('dm', function (data) {
+      alert(data.from + '님에게서 귓속말이 도착했습니다.' + data.msg)
+    })
+    document.querySelector('#hidden-chat-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (e.target.hiddenChat.value) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            e.target.hiddenChat.value = '';
+          } else {
+            console.error(xhr.responseText);
+          }
+        };
+        xhr.open('POST', '/room/#{room._id}/hiddenchat');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({ otherId: this.otherId.value, chat: this.hiddenChat.value }));
+        document.getElementById('hiddenChat').value=''; // clear input field after submitting.
+        document.getElementById('otherId').value='';
+      }
     });

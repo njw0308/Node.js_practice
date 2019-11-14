@@ -22,6 +22,13 @@ io.on('connection', (socket) => {
         sessionMiddleware(socket.request, socket.request.res, next); // 세션미들웨어 커스터마이징
     });
 
+npm i cookie-signature 의 사용 이유? 
+express가 만든 세션 쿠키(req.signedCookies['connect.sid']) -->
+클라이언트 ( 한 번 더 암호화?? 엄청 긴 이상한 string) --> 
+다시 express로 들어올 떄(req.signedCookies['connect.sid']) --> 
+axios 로 보낼 때( sign() 메서드로 아까 클라이언트 보낼 때랑 같은 한 번더 암호화? 된 긴 string) 
+
+프론트 -> 서버 or 서버 -> 프론트 방향이 아니라, socket.emit( 'event' , ) -> socket.on( 'event' , ) 의 방향이 맞는 말!!
 --------------------------------------
 복습
 express.json() --> req.body 를 사용할 수 있게끔. / JSON 형식의 데이터

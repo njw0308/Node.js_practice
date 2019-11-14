@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 module.exports = (server, app, sessionMiddleware) => {
     const io = SocketIO(server, {path: '/socket.io'});
     app.set('io', io); // 라우터에서 io 객체를 쓸 수 있게 저장. req.app.get('io') 로 접근
-    const room = io.of('/room') // namespace 만들기. 같은 네임스페이스끼리 데이터 전달.
+    const room = io.of('/room'); // namespace 만들기. 같은 네임스페이스끼리 데이터 전달.
     const chat = io.of('/chat');
 
     // io.use 메서드로 미들웨어를 장착할 수 있음. 
@@ -55,10 +55,7 @@ module.exports = (server, app, sessionMiddleware) => {
         //     chat: `${req.session.color}님이 입장하셨습니다. 현재 방 인원은 ${userCount}명 입니다.`,
         //     number: userCount,
         // });
-
-        console.log("최초 connection 때의 header : ",  JSON.stringify(req.headers));
-        console.log("req.signedCookies['connect.sid'] : ", req.signedCookies['connect.sid']);
-        console.log("cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET) : ", cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET));
+        
         axios.post(`http://localhost:8005/room/${roomId}/sys`, {
             type: 'join'}, {
                 headers: {
@@ -66,6 +63,10 @@ module.exports = (server, app, sessionMiddleware) => {
                 },
             });
 
+        socket.on('dm', (data) => {
+            socket.to(data.target).emit('dm', data);
+        });
+        
         socket.on('disconnect', () => {
             console.log('chat 네임스페이스 접속 해제');
             socket.leave(roomId); //방에서 나감.
