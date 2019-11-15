@@ -8,9 +8,16 @@ const axios = require('axios');
 const Room = require('../schemas/room');
 const Chat = require('../schemas/chat');
 
+var userList = [];
+
 router.get('/' , async (req, res, next) => {
     try {
+        console.log("접속접속");
         const rooms = await Room.find({});
+        if (!userList.includes(req.session.color)) {
+            userList = userList.concat(req.session.color);  
+            console.log("userList 최초 : " , userList);         
+        };
         res.render('main', { rooms, title: 'GIF 채팅방', error: req.flash('roomError')});
     } catch(err) {
         console.error(err);
@@ -199,7 +206,21 @@ router.post('/room/:id/sys', async (req, res, next) => {
             chat,
             number: req.app.get('io').of('/chat').adapter.rooms[req.params.id].length,
         });
-        res.send('ok');
+
+        // 방장이 나갔을 경우. 
+        if(req.body.type === 'exit') {
+            const currentRoom = await Room.findById(req.params.id)
+            const checker = req.session.color === currentRoom.owner ? true : false;
+            const index = userList.indexOf(req.session.color);
+            userList.splice(index, 1);
+            console.log("userList : " , userList);
+            if (checker) {
+                await Room.updateOne({_id: req.params.id}, {$set: {owner: userList[0]}});
+            };
+            res.send('ok')
+        } else {
+            res.send('ok');
+        }
     } catch(err) {
         console.error(err);
         next(err);
@@ -214,7 +235,7 @@ router.post('/room/:id/hiddenchat', async (req, res, next) => {
             chat: "귓속말" + req.body.chat,
         });
         await chat.save();
-        // 클라이언트에게 chat 이벤트를 발생시킴.
+        // 클라이언트에게 chat 이벤트를 발생시킴. req.body.otherId 는 상대방의 Id. 
         req.app.get('io').of('/chat').to(req.body.otherId).emit('chat', chat); // of( 'namepspace' ).to ( 'room' )
         res.send('ok');
     } catch(err) {

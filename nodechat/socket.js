@@ -72,7 +72,6 @@ module.exports = (server, app, sessionMiddleware) => {
             socket.leave(roomId); //방에서 나감.
             // 방에 인원이 하나도 없는 경우.
             const currentRoom = socket.adapter.rooms[roomId]; // 방에 대한 정보. namespace 로 지정한 그 방이 아닌. join 으로 들어오는 고유명사로써 방.
-            console.log("currentRoom", '-', currentRoom);
             const userCount = currentRoom? currentRoom.length : 0;
 
             // 시스템 메세지 저장 LOGIC

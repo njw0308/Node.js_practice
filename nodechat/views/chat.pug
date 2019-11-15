@@ -3,7 +3,7 @@ extends layout
 block content
   h1= title
   #number_cnt=number + '명'
-  a#exit-btn(href='/') 방 나가기
+  button#exit-btn 방 나가기
   fieldset
     legend 채팅 내용
     #chat-list
@@ -154,4 +154,9 @@ block content
         document.getElementById('hiddenChat').value=''; // clear input field after submitting.
         document.getElementById('otherId').value='';
       }
+    });
+    document.querySelector('#exit-btn').addEventListener('click', function (e) {
+      console.log("working");
+      socket.disconnect();
+      location.href = '/';
     });
