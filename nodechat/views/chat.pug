@@ -3,6 +3,7 @@ extends layout
 block content
   h1= title
   #number_cnt=number + '명'
+  #owner(style="display:none")=owner
   button#exit-btn 방 나가기
   fieldset
     legend 채팅 내용
@@ -73,13 +74,24 @@ block content
       var name = document.createElement('div');
       name.textContent = data.user;
       name.className= 'chat-user';
+      var owner = document.getElementById('owner');
+      owner.textContent = data.roomOwner;
       if (data.user !== "#{user}"){
         var dm = document.createElement('button');
         dm.textContent = "귓속말";
         dm.className = 'dm';
-        dm.dataset.socket = data.socket;  // 서버에서 넘어옴.
+        dm.dataset.socket = data.socket;  // 서버에서 넘어옴. {socket : req.body.sid }
         dm.addEventListener('click', sendDM);
         name.appendChild(dm);
+        console.log("HERE", data.user, data.roomOwner);
+        if ( data.user !== owner.textContent) {
+          var out = document.createElement('button');
+          out.textContent = "강퇴";
+          out.className ='out';
+          out.dataset.socket = data.socket; // 서버에서 넘어옴. {socket : req.body.sid }
+          out.addEventListener('click', sendOut);
+          name.appendChild(out);
+        }
       }
       div.appendChild(name);
       if (data.chat) {
@@ -135,8 +147,20 @@ block content
       e.addEventListener('click', sendDM);
     });
     socket.on('dm', function (data) {
-      alert(data.from + '님에게서 귓속말이 도착했습니다.' + data.msg)
-    })
+      alert(data.from + '님에게서 귓속말이 도착했습니다.' + data.msg);
+    });
+    var sendOut = function (e) {
+      var result = window.confirm("강퇴하시겠습니까?");
+      if (result) {
+        var id = e.target.dataset.socket;
+        socket.emit('out', {target: id, from: "#{user}"})
+      }
+    };
+    socket.on('out', function (data) {
+      alert(data.from + '님이 강퇴했어요.');
+      socket.disconnect();
+      window.location = '/';
+    });
     document.querySelector('#hidden-chat-form').addEventListener('submit', function (e) {
       e.preventDefault();
       if (e.target.hiddenChat.value) {
@@ -156,7 +180,7 @@ block content
       }
     });
     document.querySelector('#exit-btn').addEventListener('click', function (e) {
-      console.log("working");
-      socket.disconnect();
+      console.log("SOCKET : ", socket);
+      socket.disconnect(); // disconnect 를 먼저 시킨 후에, main page 로 돌아가겠다. why? 그래야 라우터를 먼저 거침.
       location.href = '/';
     });

@@ -8,16 +8,13 @@ const axios = require('axios');
 const Room = require('../schemas/room');
 const Chat = require('../schemas/chat');
 
-var userList = [];
+var userList = {}; // 방에 따라 userlist 가 다르니까 dictionary 형태로.
 
 router.get('/' , async (req, res, next) => {
     try {
         console.log("접속접속");
         const rooms = await Room.find({});
-        if (!userList.includes(req.session.color)) {
-            userList = userList.concat(req.session.color);  
-            console.log("userList 최초 : " , userList);         
-        };
+        
         res.render('main', { rooms, title: 'GIF 채팅방', error: req.flash('roomError')});
     } catch(err) {
         console.error(err);
@@ -40,6 +37,7 @@ router.post('/room', async (req, res, next) => {
             password: req.body.password,
         });
         const newRoom = await room.save();
+        userList[newRoom._id] = [];
         const io = req.app.get('io'); // router 에서 웹 소켓에 접근할 수 있게끔.
         io.of('/room').emit('newRoom', newRoom);
 
@@ -56,6 +54,11 @@ router.get('/room/:id', async (req, res, next) => {
     try {
         const room = await Room.findOne({ _id : req.params.id});
         const io = req.app.get('io');
+        
+        if (!userList[req.params.id].includes(req.session.color)) {
+            userList[req.params.id] = userList[req.params.id].concat(req.session.color);  
+            console.log("userList 최초 : " , userList);         
+        };
         if (!room) {
             req.flash('roomError', '존재하지 않는 방입니다');
             return res.redirect('/');
@@ -76,6 +79,7 @@ router.get('/room/:id', async (req, res, next) => {
             room,
             title: room.title,
             chats,
+            owner: room.owner,
             user: req.session.color,
             number: rooms && rooms[req.params.id] && rooms[req.params.id].length + 1 || 1, // 최초 초깃값 1로 설정. 
         });
@@ -134,13 +138,16 @@ router.post('/room/:id/chat', async (req, res, next) => {
             chat: req.body.chat,
         });
         await chat.save();
+        const currentRoom = await Room.findById(req.params.id)
+        console.log("ROOWOWNER: " , currentRoom.owner);
         // 클라이언트에게 chat 이벤트를 발생시킴.
         // req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat); // of( 'namepspace' ).to ( 'room' )
         req.app.get('io').of('/chat').to(req.params.id).emit('chat', {
             socket: req.body.sid, // 프론트에서 넘어온 sid 
             room: req.params.id,
             user: req.session.color,
-            chat: req.body.chat
+            chat: req.body.chat,
+            roomOwner: currentRoom.owner
         });
         res.send('ok');
     } catch(err) {
@@ -211,11 +218,11 @@ router.post('/room/:id/sys', async (req, res, next) => {
         if(req.body.type === 'exit') {
             const currentRoom = await Room.findById(req.params.id)
             const checker = req.session.color === currentRoom.owner ? true : false;
-            const index = userList.indexOf(req.session.color);
-            userList.splice(index, 1);
+            const index = userList[req.params.id].indexOf(req.session.color);
+            userList[req.params.id].splice(index, 1);
             console.log("userList : " , userList);
             if (checker) {
-                await Room.updateOne({_id: req.params.id}, {$set: {owner: userList[0]}});
+                await Room.updateOne({_id: req.params.id}, {$set: {owner: userList[req.params.id][0]}}); // 바뀐 방장으로 update. 
             };
             res.send('ok')
         } else {
@@ -243,5 +250,7 @@ router.post('/room/:id/hiddenchat', async (req, res, next) => {
         next(err);
     }
 });
+
+
 
 module.exports = router

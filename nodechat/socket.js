@@ -66,6 +66,10 @@ module.exports = (server, app, sessionMiddleware) => {
         socket.on('dm', (data) => {
             socket.to(data.target).emit('dm', data);
         });
+
+        socket.on('out', (data) => {
+            socket.to(data.target).emit('out', data);
+        })
         
         socket.on('disconnect', () => {
             console.log('chat 네임스페이스 접속 해제');
@@ -107,8 +111,8 @@ module.exports = (server, app, sessionMiddleware) => {
                 type: 'exit'}, {
                 headers: { // 같은 사람이 보냈다는 것을 알려주기 위해, header 에 내 cookie를 심어 보냄.
                     Cookie: `connect.sid=${'s%3A' + cookie.sign(req.signedCookies['connect.sid'], process.env.COOKIE_SECRET)}` 
-                }
-            });
+                    }
+                });
             }
         });
     });
