@@ -33,6 +33,30 @@
 --> 이미지를 업로드하려면 input[type=file] 태그와 form tag 의 enctype 을 multipart/form-data(인코딩 타입). 로 함.
 --> 이것을 해석(디코딩?)하려면 multer 가 필요하다.
 
+
+13. 개발할 때는 개발용. 배포할 때는 배포용.  
+    1. app.js 부분 수정.
+    2. sequelize config 수정.
+       config 파일을 js 파일로 변환. ( dotenv 사용 가능. )
+    3. package.json 수정. 
+    4. npm i -g cross-env ( 윈도우에서도 되게끔 )
+    5. npm audit  + npm audit fix ( 취약점 검사 및 자동 수정)
+    6. npm i pm2  + npm i -g pm2 ( pm2 를 써야 cloud 에서도 노드의 서버가 유지가 됨, node 를 background 에서 돌려줘서 우리는 다른 일을 할 수 있음)
+       --> 싱글스레드인 node 의 취약점을 멀티코어를 쓰게끔 해서 보완함. ( fork mode 가 아닌  cluster mode. how?  -i 숫자. --> package.json 참조))
+       pm2 list 
+       pm2 restart all
+       pm2 monit
+       pm2 kill
+       --> 개발할 때는 nodemon 배포할 때는 pm2 를 주로 많이 쓴다.
+    7. npm i winston ( 서버가 종료되더라도 기록파일들을 남겨둠. ) + npm i winston-daily-rotate-file
+    8. npm i helmet  + npm i hpp ( 보안 취약 극복 , option 기능으로 추가적으로 조절 가능 )
+    9. npm i connect-redis + npm i redis ( 유지되는 세션. 서버가 재시작될 때 세션들이 다 날라가는 것을 방지? )
+       --> DB는 웹서버와 분리하는 것을 원칙으로 하여 hosting 하는 것을 추천.
+   10. nvm 설치 ( 노드 버전을 업데이트 하기 위한 패키지 )
+       --> nvm list
+       --> nvm install [version] 
+       --> nvm use [version]
+       
 ------------------------------------------
 복습:
 app.use 를 사용하므로 라우터도 역시 미들웨어.
